@@ -1,12 +1,1 @@
-[
-    {
-        "name": "John",
-        "surname": "Doe",
-        "status": "active"
-    },
-    {
-        "name": "Jane",
-        "surname": "Doe",
-        "status": "passive"
-    }
-]
+[{"name":"John","surname":"Doe","status":"active"},{"name":"Jane","surname":"Doe","status":"passive"},{"firstName":"","surname":""},{"firstName":"Teszt","surname":"Elek"},{"firstName":"Teszt","surname":"Elek"},{"firstName":"Teszt","surname":"Elek"},{"firstName":"A","surname":"B"}]

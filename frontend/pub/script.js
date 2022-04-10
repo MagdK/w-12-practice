@@ -5,10 +5,10 @@ const parseJSON = async (url) => {
 };
 
 //objectumból kibontjuk a kulcsait: ({name, surname})
-const userComponent = ({name, surname, status}) => {
+const userComponent = ({firstName, surname}) => {
     return `
         <div>
-            <h1>${name}</h1>
+            <h1>${firstName}</h1>
             <h2>${surname}</h2>
         </div>
     `
@@ -35,9 +35,7 @@ const loadEvent = async () => {
 
     const result = await parseJSON('/api/v1/users');
     const rootElement = document.getElementById("root");
-    const dataSubmitButton = document.getElementById("submit-button");
-    const firstName = document.querySelector(`input[name="firstName"]`);
-    const surname = document.querySelector(`input[name="surname"]`);
+    
 
     rootElement.insertAdjacentHTML(
         "beforeend", 
@@ -46,6 +44,9 @@ const loadEvent = async () => {
 
     rootElement.insertAdjacentHTML("afterend",  addUserComponent());
 
+    const dataSubmitButton = document.getElementById("submit-data");
+    const firstName = document.querySelector(`input[name="firstName"]`);
+    const surname = document.querySelector(`input[name="surname"]`);
 
     dataSubmitButton.addEventListener("click", e => {
         const userData = {
@@ -53,18 +54,17 @@ const loadEvent = async () => {
             surname: surname.value
         };
 
-        fetch("/user/new", {
+        fetch("/users/new", {
             method: "POST",
+            // uresen ment at, express nem tamogatja, ezert adtuk meg ezt a headers-ben a content-type -ot
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(userData)
         })
         .then(async data => {
-            const users = await data.json();
-
-            rootElement.innerHTML = "";
-            rootElement.insertAdjacentHTML("beforeend", users.map(user => userComponent(user)).join(""))
+            const user = await data.json();
+            rootElement.insertAdjacentHTML("beforeend", userComponent(user))
         })
     })
 };

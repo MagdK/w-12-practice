@@ -1,4 +1,3 @@
-//cd backend -> npm init -y -> npm install express
 const express = require('express');
 const fs = require ('fs');
 const path = require('path');
@@ -6,7 +5,8 @@ const path = require('path');
 const port = 9000;
 const app = express();
 
-app.use(express.json()); //ezt mindig a const app alá kell írni!, a megfelelő esetekben json-ná alakítja
+// minden get es post url ele kell az alabbi sor, a megfelelő esetekben json-ne alakítja
+app.use(express.json()); 
 
 //frontendFolder változóba mentve az elérése a frontendnek
 // https://stackoverflow.com/questions/14594121/express-res-sendfile-throwing-forbidden-error
@@ -14,7 +14,7 @@ const fFolder = path.resolve(__dirname, '..', 'frontend');
 // kulon valtozoba kimentjuk az elerhetoseget
 // const fFolder = `${__dirname}/../frontend`; 
 
-//next: ha itt végzett akkor hajtson e végre műveletet vagy sem, átpasszolja a következőhöz gethez
+
 app.get('/', (req, res, next) => { 
     //console.log('Request received.');
     //res.send('Thank you for your request! This is our response.')
@@ -46,7 +46,7 @@ app.get('/api/v1/users', (req, res, next) => {
 });
 
 
-// url vegere ?apiKey=apple, routing-nak hivjak
+// QUERY = url vegere ?apiKey=apple, routing-nak hivjak
 app.get('/api/v1/users-query', (req, res) => {
     console.dir(req.query);
     console.log(req.query.apiKey);
@@ -59,7 +59,7 @@ app.get('/api/v1/users-query', (req, res) => {
 });
 
 
-// modernebb megoldas - a bongeszoben toroljuk a :key reszt es apple-t irunk a helyere, terminal is visszadobja key-kent az apple-t
+// PARAM - modernebb megoldas - a bongeszoben toroljuk a :key reszt es apple-t irunk a helyere, terminal is visszadobja key-kent az apple-t
 app.get('/api/v1/users-params/:key', (req, res) => {
     console.dir(req.params);
     console.log(req.params.key);
@@ -95,6 +95,7 @@ app.get('/api/v1/users/:key', (req, res, next) => {
 app.get('/admin/order-overview', (req, res, next) => { 
     res.sendFile(path.join(fFolder, 'index.html'))
 });
+
 
 // app.get('/api/v1/users-params/key', (req, res, next) => {
 //      //fs.readFile-nál error és data van mindig
@@ -139,23 +140,27 @@ app.get('/admin/order-overview', (req, res, next) => {
 // });
 
 
-//adat hozzáadása json filehoz:
+// adat hozzáadása json filehoz:
+
+
 app.post("/users/new", (req, res) => {
     fs.readFile(`${fFolder}/users.json`, (error, data) => {
-        if(error){
+        if(error) {
             console.log(error);
-            res.send("Error reading users file.")
+            res.send("Error reading users file.");
         } else {
-            const users = JSON.parse(data)
+            const users = JSON.parse(data);
             console.log(req.body);
             users.push(req.body);
 
+            // wrtieFile metodus - meg kell adni az eleresi utvonalat, plusz string-ge kell alakitani, hogy a fajlba bele tudjuk irni
             fs.writeFile(`${fFolder}/users.json`, JSON.stringify(users), error => {
-                if(error){
+                if(error) {
                     console.log(error);
-                    res.send("Error writing users file.")
+                    res.send("Error writing users file.");
                 }
             })
+            // itt kuldjuk vissza a valaszuzenetet
             res.send(req.body);
         }
     })
