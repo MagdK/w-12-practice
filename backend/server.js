@@ -9,7 +9,10 @@ const app = express();
 app.use(express.json()); //ezt mindig a const app alá kell írni!, a megfelelő esetekben json-ná alakítja
 
 //frontendFolder változóba mentve az elérése a frontendnek
-const fFolder = `${__dirname}/../frontend`;
+// https://stackoverflow.com/questions/14594121/express-res-sendfile-throwing-forbidden-error
+const fFolder = path.resolve(__dirname, '..', 'frontend');
+// kulon valtozoba kimentjuk az elerhetoseget
+// const fFolder = `${__dirname}/../frontend`; 
 
 //next: ha itt végzett akkor hajtson e végre műveletet vagy sem, átpasszolja a következőhöz gethez
 app.get('/', (req, res, next) => { 
@@ -17,16 +20,16 @@ app.get('/', (req, res, next) => {
     //res.send('Thank you for your request! This is our response.')
     
     //ezzel bármilyen létező filet kiszolgálhatunk, ezzel az index.html-el minden filet ki tudunk szolgálni
-    res.sendFile(path.join(`${__dirname}/../frontend/index.html`));
+    res.sendFile(path.join(fFolder, "index.html"));
 });
 
 app.get('/admin/order-view', (req, res, next) => { 
-    res.sendFile(path.join(`${__dirname}/../frontend/index.html`));
+    res.sendFile(path.join(`${fFolder}/index.html`));
 });
 
 //példa gyakorlásnak: itt a somefile.json-t szolgáljuk ki a kismacska endpointon
 app.get('/kismacska', (req, res, next) => { 
-    res.sendFile(path.join(`${__dirname}/../frontend/someFile.json`));
+    res.sendFile(path.join(`${fFolder}/someFile.json`));
 });
 
 app.get('/something', (req, res, next) => {
@@ -35,53 +38,65 @@ app.get('/something', (req, res, next) => {
 });
 
 //változóba mentjük az elérhetőséget
-const userFile = path.join(`${__dirname}/../frontend/users.json`);
+const userFile = path.join(`${fFolder}/users.json`);
 
 app.get('/api/v1/users', (req, res, next) => {
     console.log('Request received for users endpoint.');
-    /*
-    const users = [
-        {
-            name: 'John',
-            surname: "Doe",
-            status: 'active',
-        },
-        {
-            name: 'Jane',
-            surname: "Doe",
-            status: 'passive',
+    res.sendFile(path.join(`${fFolder}/users.json`)); 
+});
+
+
+// url vegere ?apiKey=apple, routing-nak hivjak
+app.get('/api/v1/users-query', (req, res) => {
+    console.dir(req.query);
+    console.log(req.query.apiKey);
+    
+    if (req.query.apiKey === "apple") {
+        res.sendFile(`${fFolder}/users.json`)
+    } else {
+        res.send("Unauthorised request")
+    }
+});
+
+
+// modernebb megoldas - a bongeszoben toroljuk a :key reszt es apple-t irunk a helyere, terminal is visszadobja key-kent az apple-t
+app.get('/api/v1/users-params/:key', (req, res) => {
+    console.dir(req.params);
+    console.log(req.params.key);
+    if(req.params.key === "apple") {
+        res.send("Azt írtad be, hogy apple")
+    } else {
+        res.send("Nem azt irtad be, hogy alma");
+    }
+});
+
+// active és passive paramsra átalakítva egy get request-be
+app.get('/api/v1/users/:key', (req, res, next) => {
+     //fs.readFile-nál error és data van mindig
+    fs.readFile(userFile, (error, data) => {
+        const users = JSON.parse(data) // JSON.parse javascript objektumma konvertalja a json file-t
+        if(req.params.key === "active") {
+            const activeUsers = users.filter(user => user.status === "active");
+            res.send(activeUsers)
+        } else if(req.params.key === "passive") {
+            const passiveUsers = users.filter(user => user.status === "passive");
+            res.send(passiveUsers)
+        } else {
+            res.send("Something went wrong.")
         }
-    ]
-    res.send(JSON.stringify(users)) //a users változót stringként visszaküldjük a frontendnek
-    */
-    //a fenti users objectet belementettük egy users.json fileba és most elérhetővé tesszük a frontendnek
-    res.sendFile(path.join(`${__dirname}/../frontend/users.json`)); 
+    })
 });
 
+// QUERY vs PARAMS - melyiket erdemes hasznalni? Ez a helyzettol fugg. 
+// QUERY - univerzalis webes standard
+// PARAMS - ez az express js-hez kapcsolodik
 
-app.get('/api/v1/users-query', (req, res, next) => {
-    console.dir(req.query) //clg.dir kulcsértékpároknál
-    console.log(req.query.apiKey)
-    if (req.query.apiKey === 'apple'){
-        res.sendFile(path.join(`${__dirname}/../frontend/users.json`));  
-    }else{
-        res.send('Unauthorized request.')
-    }
+
+app.get('/admin/order-overview', (req, res, next) => { 
+    res.sendFile(path.join(fFolder, 'index.html'))
 });
 
-//key értéke apple lett, mert böngészőben a :key helyére apple-t írtunk, terminálban megkapjuk az apple-t
-/*app.get('/api/v1/users-params/:key', (req, res, next) => {
-    console.dir(req.params) //clg.dir kulcsértékpároknál
-    console.log(req.params.key)
-    if(req.params.key === 'apple'){
-        res.send('Almát írtál be.')
-    }else{
-        res.send('Nem almát írtál be.')
-    }
-})
-*/
-
-// app.get('/api/v1/users/active', (req, res, next) => {
+// app.get('/api/v1/users-params/key', (req, res, next) => {
 //      //fs.readFile-nál error és data van mindig
 //     fs.readFile(userFile, (error, data) => {
 //         if (error) {
@@ -90,6 +105,21 @@ app.get('/api/v1/users-query', (req, res, next) => {
 //             const users = JSON.parse(data)
 //             const activeUsers = users.filter(user => user.status === "active")
 //             res.send(activeUsers)
+//         }
+//     })
+// });
+
+
+// app.get('/api/v1/users/active', (req, res, next) => {
+//     fs.readFile(userFile, (error, data) => {
+//         if (error) {
+//             res.send("Error at file reading")
+//         } else {
+//             const users = JSON.parse(data)
+//             const activeUsers = users.filter(user => user.status === "active")
+//             res.send(activeUsers)
+//             res.send(users.filter(user => user.status === "active"));
+//             //egyesével megyünk végig a usereken a filterben, ezért egyesszámban írjuk a filteren belül)
 //         }
 //     })
 // });
@@ -108,23 +138,6 @@ app.get('/api/v1/users-query', (req, res, next) => {
 //     })
 // });
 
-//active és passive paramsra átalakítva egy get requestbe:
-app.get('/api/v1/users-params/:key', (req, res, next) => {
-    console.dir(req.params) //clg.dir kulcsértékpároknál
-    console.log(req.params.key)
-    fs.readFile(userFile, (error, data) => {  //userFile változó elérési útvonal
-        const users = JSON.parse(data) //innen elérhető mindegyik if számára a users változó
-        if(req.params.key === 'active'){
-            const activeUsers = users.filter(user => user.status === "active");
-            res.send(activeUsers)
-        }else if(req.params.key === 'passive'){
-            const passiveUsers = users.filter(user => user.status === "passive")
-            res.send(passiveUsers)
-        }else{
-            res.send("Error happened.")
-        }
-    })
-});
 
 //adat hozzáadása json filehoz:
 app.post("/users/new", (req, res) => {
@@ -150,7 +163,18 @@ app.post("/users/new", (req, res) => {
 
 //minden request beérkezett ide a terminálba
 
-//listen elé kell ezt tenni, hogy ne akadjon össze
+/*  
+https://www.w3schools.com/js/js_window_location.asp
+
+document.getElementById("demo").innerHTML = 
+"The full URL of this page is:<br>" + window.location.href; // -> https://www.w3schools.com/js/tryit.asp?filename=tryjs_loc_href
+
+document.getElementById("demo").innerHTML = 
+"The full URL of this page is:<br>" + window.location.pathname; // -> /js/tryit.asp
+*/
+
+
+// listen elé kell ezt tenni, hogy ne akadjon össze
 app.use('/pub', express.static(`${__dirname}/../frontend/pub`));
 
 app.listen(port, () => {
